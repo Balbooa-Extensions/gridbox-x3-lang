@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<install version="3.0.0" client="administrator" type="language" method="upgrade">
+    <name>Gridbox</name>
+    <creationDate>{CURRENT_DATE}</creationDate>
+    <author>Balbooa</author>
+    <copyright>Balbooa</copyright>
+    <license>https://www.gnu.org/licenses/gpl-2.0.html GNU/GPL</license>
+    <authorEmail>hellosupport@balbooa.com</authorEmail>
+    <authorUrl>https://www.balbooa.com/</authorUrl>
+    <version>3.0.0</version>
+    <description></description>
+    <tag>{LANG_CODE}</tag>
+    <administration>
+    <files folder="administrator">
+          <filename>{LANG_CODE}.com_gridbox.ini</filename>
+          <filename>{LANG_CODE}.com_gridbox.sys.ini</filename>
+    </files>
+    <files folder="site">
+          <filename>{LANG_CODE}.com_gridbox.ini</filename>
+    </files>
+    </administration>
+</install>
