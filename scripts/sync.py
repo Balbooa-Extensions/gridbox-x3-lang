@@ -1,17 +1,25 @@
 import os
 import re
+from deep_translator import GoogleTranslator
 
 MASTER_LANG = 'com_gridbox_en-GB'
 ROOT_DIR = '.' 
 
+def translate_text(text, target_lang):
+    if not text.strip():
+        return ""
+    
+    # Превращаем ru-RU -> ru, uk-UA -> uk и т.д.
+    lang_code = target_lang.split('-')[0]
+    
+    try:
+        translated = GoogleTranslator(source='en', target=lang_code).translate(text)
+        return translated if translated else ""
+    except Exception as e:
+        print(f"Translation error for '{text}': {e}")
+        return ""
+
 def parse_ini(filepath):
-    """
-    Parses a Joomla INI file.
-    Returns:
-        keys (dict): Dictionary of key-value pairs.
-        order (list): List of keys in the exact order they appeared.
-        comments (dict): Stores comments or other non-key lines mapped to their position.
-    """
     keys = {}
     order = []
     other_lines = []
@@ -21,7 +29,6 @@ def parse_ini(filepath):
     
     with open(filepath, 'r', encoding='utf-8-sig', errors='ignore') as f:
         for line in f:
-            # Look for lines in the format KEY="Value"
             match = re.match(r'^([A-Z0-9_-]+)\s*=\s*"(.*)"', line.strip())
             if match:
                 key, val = match.groups()
@@ -39,7 +46,6 @@ def sync_translations():
         print(f"Master language folder {MASTER_LANG} not found!")
         return
 
-    # Collect all .ini files from the master folder
     master_files = []
     for root, _, files in os.walk(master_path):
         for file in files:
@@ -47,19 +53,16 @@ def sync_translations():
                 rel_path = os.path.relpath(os.path.join(root, file), master_path)
                 master_files.append(rel_path)
 
-    # 1. First, sort and clean up the master (en-GB) files alphabetically by key
+    # 1. Sort and clean up the master (en-GB) files alphabetically by key
     for rel_path in master_files:
         master_file_path = os.path.join(master_path, rel_path)
         master_keys, master_order, master_others = parse_ini(master_file_path)
         
-        # Sort master keys alphabetically
         sorted_keys = sorted(master_keys.keys())
         
         with open(master_file_path, 'w', encoding='utf-8') as f:
-            # Write header comments if any exist at the top
             for line in master_others:
                 f.write(line)
-            # Write sorted keys
             for key in sorted_keys:
                 f.write(f'{key}="{master_keys[key]}"\n')
 
@@ -71,7 +74,7 @@ def sync_translations():
             continue
 
         lang_code = item.replace('com_gridbox_', '')
-        print(f"Synchronizing language: {item}")
+        print(f"Synchronizing and translating language: {item}")
         
         for rel_path in master_files:
             target_rel_path = rel_path.replace('en-GB', lang_code)
@@ -79,22 +82,26 @@ def sync_translations():
             target_file_path = os.path.join(lang_dir, target_rel_path)
             master_file_path = os.path.join(master_path, rel_path)
             
-            # Read fresh master data (already sorted)
             master_keys, master_order, master_others = parse_ini(master_file_path)
             target_keys, _, _ = parse_ini(target_file_path)
 
             os.makedirs(os.path.dirname(target_file_path), exist_ok=True)
 
-            # Write the target file matching the master's structure and sorted order
             with open(target_file_path, 'w', encoding='utf-8') as f:
                 for line in master_others:
                     f.write(line)
                 
                 for key in master_order:
-                    # Keep existing translation if present, otherwise fallback to master value
-                    val = target_keys.get(key, master_keys[key])
+                    # Если перевод уже есть и он не пустой — оставляем его (защита ручного труда)
+                    if key in target_keys and target_keys[key].strip():
+                        val = target_keys[key]
+                    else:
+                        # Если ключ новый или пустой — переводим автоматически
+                        print(f"Translating new key '{key}' into {lang_code}...")
+                        val = translate_text(master_keys[key], lang_code)
+                    
                     f.write(f'{key}="{val}"\n')
 
 if __name__ == '__main__':
     sync_translations()
-    print("Synchronization and sorting completed successfully!")
+    print("Synchronization, sorting, and translation completed successfully!")
