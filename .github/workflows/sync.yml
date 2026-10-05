@@ -1,4 +1,4 @@
-name: Sync and Sort Joomla Language Keys
+name: Sync Language Keys
 
 on:
   push:
