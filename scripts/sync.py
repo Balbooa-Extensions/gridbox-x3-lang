@@ -2,7 +2,7 @@ import os
 import re
 
 MASTER_LANG = 'com_gridbox_en-GB'
-ROOT_DIR = '.'  # Root directory where all com_gridbox_* folders are located
+ROOT_DIR = '.' 
 
 def parse_ini(filepath):
     """
@@ -65,7 +65,6 @@ def sync_translations():
 
     print("Master language (en-GB) files sorted alphabetically successfully.")
 
-    # 2. Iterate through all other language folders and sync them with master
     for item in os.listdir(ROOT_DIR):
         lang_dir = os.path.join(ROOT_DIR, item)
         if not os.path.isdir(lang_dir) or item == MASTER_LANG or not item.startswith('com_gridbox_'):
