@@ -1,6 +1,8 @@
 import os
 import re
-from deep_translator import GoogleTranslator
+import urllib.request
+import urllib.parse
+import json
 
 MASTER_LANG = 'com_gridbox_en-GB'
 ROOT_DIR = '.' 
@@ -12,12 +14,18 @@ def translate_text(text, target_lang):
     lang_code = target_lang.split('-')[0]
     
     try:
-        translated = GoogleTranslator(source='en', target=lang_code).translate(text)
-        print(f"Successfully translated '{text}' to '{translated}' for {target_lang}")
-        return translated if translated else ""
+        url = "https://api.mymemory.translated.net/get?q=" + urllib.parse.quote(text) + "&langpair=en|" + lang_code
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            if data and 'responseData' in data and data['responseData']['translatedText']:
+                translated = data['responseData']['translatedText']
+                if not translated.startswith("MYMEMORY WARNING") and not translated.startswith("QUERY LENGTH"):
+                    return translated
     except Exception as e:
-        print(f"CRITICAL Translation error for '{text}': {e}")
-        return ""
+        print(f"Translation error for '{text}': {e}")
+        
+    return text
 
 def parse_ini(filepath):
     keys = {}
