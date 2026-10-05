@@ -9,14 +9,14 @@ def translate_text(text, target_lang):
     if not text.strip():
         return ""
     
-    # Превращаем ru-RU -> ru, uk-UA -> uk и т.д.
     lang_code = target_lang.split('-')[0]
     
     try:
         translated = GoogleTranslator(source='en', target=lang_code).translate(text)
+        print(f"Successfully translated '{text}' to '{translated}' for {target_lang}")
         return translated if translated else ""
     except Exception as e:
-        print(f"Translation error for '{text}': {e}")
+        print(f"CRITICAL Translation error for '{text}': {e}")
         return ""
 
 def parse_ini(filepath):
@@ -29,7 +29,7 @@ def parse_ini(filepath):
     
     with open(filepath, 'r', encoding='utf-8-sig', errors='ignore') as f:
         for line in f:
-            match = re.match(r'^([A-Z0-9_-]+)\s*=\s*"(.*)"', line.strip())
+            match = re.match(r'^([a-zA-Z0-9_-]+)\s*=\s*"(.*)"', line.strip())
             if match:
                 key, val = match.groups()
                 keys[key] = val
@@ -53,7 +53,6 @@ def sync_translations():
                 rel_path = os.path.relpath(os.path.join(root, file), master_path)
                 master_files.append(rel_path)
 
-    # 1. Sort and clean up the master (en-GB) files alphabetically by key
     for rel_path in master_files:
         master_file_path = os.path.join(master_path, rel_path)
         master_keys, master_order, master_others = parse_ini(master_file_path)
@@ -92,11 +91,9 @@ def sync_translations():
                     f.write(line)
                 
                 for key in master_order:
-                    # Если перевод уже есть и он не пустой — оставляем его (защита ручного труда)
                     if key in target_keys and target_keys[key].strip():
                         val = target_keys[key]
                     else:
-                        # Если ключ новый или пустой — переводим автоматически
                         print(f"Translating new key '{key}' into {lang_code}...")
                         val = translate_text(master_keys[key], lang_code)
                     
