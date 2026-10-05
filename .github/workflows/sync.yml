@@ -1,0 +1,33 @@
+name: Sync and Sort Joomla Language Keys
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'com_gridbox_en-GB/**'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Run synchronization and sorting script
+        run: python scripts/sync.py
+
+      - name: Commit and push changes if any
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-sort and sync language keys [skip ci]" && git push)
