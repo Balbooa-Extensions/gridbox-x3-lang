@@ -2,8 +2,6 @@ name: Sync Language Keys
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 3 * * *' # Запуск каждый день в 3:00 ночи (или можете оставить только workflow_dispatch)
 
 jobs:
   sync:
@@ -18,7 +16,7 @@ jobs:
       - name: Checkout source repository (gridbox-x3)
         uses: actions/checkout@v4
         with:
-          repository: 'YOUR_GITHUB_USERNAME/gridbox-x3' # Замените на ваш логин и имя репозитория gridbox-x3
+          repository: 'Balbooa-Extensions/gridbox-x3'
           token: ${{ secrets.GH_PAT }}
           path: 'temp_gridbox_x3'
 
