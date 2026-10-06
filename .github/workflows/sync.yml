@@ -1,11 +1,9 @@
 name: Sync Language Keys
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'com_gridbox_en-GB/**'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 3 * * *' # Запуск каждый день в 3:00 ночи (или можете оставить только workflow_dispatch)
 
 jobs:
   sync:
@@ -14,8 +12,23 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository (gridbox-x3-lang)
         uses: actions/checkout@v4
+
+      - name: Checkout source repository (gridbox-x3)
+        uses: actions/checkout@v4
+        with:
+          repository: 'YOUR_GITHUB_USERNAME/gridbox-x3' # Замените на ваш логин и имя репозитория gridbox-x3
+          token: ${{ secrets.GH_PAT }}
+          path: 'temp_gridbox_x3'
+
+      - name: Prepare en-GB files structure
+        run: |
+          mkdir -p com_gridbox_en-GB/administrator com_gridbox_en-GB/site
+          cp temp_gridbox_x3/packages/com_gridbox/admin/language/admin/en-GB/en-GB.com_gridbox.ini com_gridbox_en-GB/administrator/
+          cp temp_gridbox_x3/packages/com_gridbox/admin/language/admin/en-GB/en-GB.com_gridbox.sys.ini com_gridbox_en-GB/administrator/
+          cp temp_gridbox_x3/packages/com_gridbox/admin/language/site/en-GB/en-GB.com_gridbox.ini com_gridbox_en-GB/site/
+          rm -rf temp_gridbox_x3
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -23,7 +36,7 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install deep-translator
+        run: pip install deep-translator || true
 
       - name: Run synchronization and sorting script
         run: python scripts/sync.py
@@ -33,4 +46,4 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add .
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-sort and sync language keys [skip ci]" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-sort and sync language keys from gridbox-x3 [skip ci]" && git push)
